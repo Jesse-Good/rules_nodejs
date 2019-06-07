@@ -436,68 +436,105 @@ def _generate_code_split_entry(ctx, bundles_folder, output):
     )
 
 def _rollup_bundle(ctx):
-    # Generate code split bundles if additional entry points have been specified.
-    # See doc for additional_entry_points for more information.
-    # Note: "_chunks" is needed on the output folders since ctx.label.name + ".es2015" is already
-    # a folder that contains the re-rooted es2015 sources
-    rollup_config = write_rollup_config(ctx, output_format = "es", additional_entry_points = ctx.attr.additional_entry_points)
-    code_split_es2015_output_dir = ctx.actions.declare_directory(ctx.label.name + "_chunks_es2015")
-    _run_rollup(ctx, _collect_es2015_sources(ctx), rollup_config, code_split_es2015_output_dir)
-    code_split_es2015_min_output_dir = ctx.actions.declare_directory(ctx.label.name + "_chunks_min_es2015")
-    _run_terser(ctx, code_split_es2015_output_dir, code_split_es2015_min_output_dir, None)
-    code_split_es2015_min_debug_output_dir = ctx.actions.declare_directory(ctx.label.name + "_chunks_min_debug_es2015")
-    _run_terser(ctx, code_split_es2015_output_dir, code_split_es2015_min_debug_output_dir, None, debug = True)
+    if ctx.attr.additional_entry_points or ctx.attr.auto_additional_entry_points:
+        # Generate code split bundles if additional entry points have been specified.
+        # See doc for additional_entry_points for more information.
+        # Note: "_chunks" is needed on the output folders since ctx.label.name + ".es2015" is already
+        # a folder that contains the re-rooted es2015 sources
+        rollup_config = write_rollup_config(ctx, output_format = "es", additional_entry_points = ctx.attr.additional_entry_points)
+        code_split_es2015_output_dir = ctx.actions.declare_directory(ctx.label.name + "_chunks_es2015")
+        _run_rollup(ctx, _collect_es2015_sources(ctx), rollup_config, code_split_es2015_output_dir)
+        code_split_es2015_min_output_dir = ctx.actions.declare_directory(ctx.label.name + "_chunks_min_es2015")
+        _run_terser(ctx, code_split_es2015_output_dir, code_split_es2015_min_output_dir, None)
+        code_split_es2015_min_debug_output_dir = ctx.actions.declare_directory(ctx.label.name + "_chunks_min_debug_es2015")
+        _run_terser(ctx, code_split_es2015_output_dir, code_split_es2015_min_debug_output_dir, None, debug = True)
 
-    code_split_es5_output_dir = ctx.actions.declare_directory(ctx.label.name + "_chunks")
-    _run_tsc_on_directory(ctx, code_split_es2015_output_dir, code_split_es5_output_dir)
-    code_split_es5_min_output_dir = ctx.actions.declare_directory(ctx.label.name + "_chunks_min")
-    _run_terser(ctx, code_split_es5_output_dir, code_split_es5_min_output_dir, None)
-    code_split_es5_min_debug_output_dir = ctx.actions.declare_directory(ctx.label.name + "_chunks_min_debug")
-    _run_terser(ctx, code_split_es5_output_dir, code_split_es5_min_debug_output_dir, None, debug = True)
+        code_split_es5_output_dir = ctx.actions.declare_directory(ctx.label.name + "_chunks")
+        _run_tsc_on_directory(ctx, code_split_es2015_output_dir, code_split_es5_output_dir)
+        code_split_es5_min_output_dir = ctx.actions.declare_directory(ctx.label.name + "_chunks_min")
+        _run_terser(ctx, code_split_es5_output_dir, code_split_es5_min_output_dir, None)
+        code_split_es5_min_debug_output_dir = ctx.actions.declare_directory(ctx.label.name + "_chunks_min_debug")
+        _run_terser(ctx, code_split_es5_output_dir, code_split_es5_min_debug_output_dir, None, debug = True)
 
-    # Generate the SystemJS boilerplate/entry point files
-    _generate_toplevel_entry(ctx, ctx.label.name + "_chunks_es2015", ctx.outputs.build_es2015)
-    _generate_toplevel_entry(ctx, ctx.label.name + "_chunks_min_es2015", ctx.outputs.build_es2015_min)
-    _generate_toplevel_entry(ctx, ctx.label.name + "_chunks_min_debug_es2015", ctx.outputs.build_es2015_min_debug)
-    _generate_code_split_entry(ctx, ctx.label.name + "_chunks", ctx.outputs.build_es5)
-    _generate_code_split_entry(ctx, ctx.label.name + "_chunks_min", ctx.outputs.build_es5_min)
-    _generate_code_split_entry(ctx, ctx.label.name + "_chunks_min_debug", ctx.outputs.build_es5_min_debug)
+        # Generate the SystemJS boilerplate/entry point files
+        _generate_toplevel_entry(ctx, ctx.label.name + "_chunks_es2015", ctx.outputs.build_es2015)
+        _generate_toplevel_entry(ctx, ctx.label.name + "_chunks_min_es2015", ctx.outputs.build_es2015_min)
+        _generate_toplevel_entry(ctx, ctx.label.name + "_chunks_min_debug_es2015", ctx.outputs.build_es2015_min_debug)
+        _generate_code_split_entry(ctx, ctx.label.name + "_chunks", ctx.outputs.build_es5)
+        _generate_code_split_entry(ctx, ctx.label.name + "_chunks_min", ctx.outputs.build_es5_min)
+        _generate_code_split_entry(ctx, ctx.label.name + "_chunks_min_debug", ctx.outputs.build_es5_min_debug)
 
-    # There is no UMD/CJS bundle when code-splitting but we still need to satisfy the output
-    _generate_code_split_entry(ctx, ctx.label.name + "_chunks", ctx.outputs.build_umd)
-    _generate_code_split_entry(ctx, ctx.label.name + "_chunks", ctx.outputs.build_umd_min)
-    _generate_code_split_entry(ctx, ctx.label.name + "_chunks", ctx.outputs.build_cjs)
-    _generate_code_split_entry(ctx, ctx.label.name + "_chunks", ctx.outputs.build_es5_umd)
-    _generate_code_split_entry(ctx, ctx.label.name + "_chunks", ctx.outputs.build_es5_umd_min)
+        # There is no UMD/CJS bundle when code-splitting but we still need to satisfy the output
+        _generate_code_split_entry(ctx, ctx.label.name + "_chunks", ctx.outputs.build_umd)
+        _generate_code_split_entry(ctx, ctx.label.name + "_chunks", ctx.outputs.build_umd_min)
+        _generate_code_split_entry(ctx, ctx.label.name + "_chunks", ctx.outputs.build_cjs)
+        _generate_code_split_entry(ctx, ctx.label.name + "_chunks", ctx.outputs.build_es5_umd)
+        _generate_code_split_entry(ctx, ctx.label.name + "_chunks", ctx.outputs.build_es5_umd_min)
 
-    # There is no source map explorer output when code-splitting but we still need to satisfy the output
-    ctx.actions.expand_template(
-        output = ctx.outputs.explore_html,
-        template = ctx.file._no_explore_html,
-        substitutions = {},
-    )
-    files = [
-        ctx.outputs.build_es2015,
-        ctx.outputs.build_es2015_min,
-        ctx.outputs.build_es2015_min_debug,
-        ctx.outputs.build_es5,
-        ctx.outputs.build_es5_min,
-        ctx.outputs.build_es5_min_debug,
-        code_split_es2015_output_dir,
-        code_split_es2015_min_output_dir,
-        code_split_es2015_min_debug_output_dir,
-        code_split_es5_output_dir,
-        code_split_es5_min_output_dir,
-        code_split_es5_min_debug_output_dir,
-    ]
-    output_group = OutputGroupInfo(
-        es2015 = depset([ctx.outputs.build_es2015, code_split_es2015_output_dir]),
-        es2015_min = depset([ctx.outputs.build_es2015_min, code_split_es2015_min_output_dir]),
-        es2015_min_debug = depset([ctx.outputs.build_es2015_min_debug, code_split_es2015_min_debug_output_dir]),
-        es5 = depset([ctx.outputs.build_es5, code_split_es5_output_dir]),
-        es5_min = depset([ctx.outputs.build_es5_min, code_split_es5_min_output_dir]),
-        es5_min_debug = depset([ctx.outputs.build_es5_min_debug, code_split_es5_min_debug_output_dir]),
-    )
+        # There is no source map explorer output when code-splitting but we still need to satisfy the output
+        ctx.actions.expand_template(
+            output = ctx.outputs.explore_html,
+            template = ctx.file._no_explore_html,
+            substitutions = {},
+        )
+        files = [
+            ctx.outputs.build_es2015,
+            ctx.outputs.build_es2015_min,
+            ctx.outputs.build_es2015_min_debug,
+            ctx.outputs.build_es5,
+            ctx.outputs.build_es5_min,
+            ctx.outputs.build_es5_min_debug,
+            code_split_es2015_output_dir,
+            code_split_es2015_min_output_dir,
+            code_split_es2015_min_debug_output_dir,
+            code_split_es5_output_dir,
+            code_split_es5_min_output_dir,
+            code_split_es5_min_debug_output_dir,
+        ]
+        output_group = OutputGroupInfo(
+            es2015 = depset([ctx.outputs.build_es2015, code_split_es2015_output_dir]),
+            es2015_min = depset([ctx.outputs.build_es2015_min, code_split_es2015_min_output_dir]),
+            es2015_min_debug = depset([ctx.outputs.build_es2015_min_debug, code_split_es2015_min_debug_output_dir]),
+            es5 = depset([ctx.outputs.build_es5, code_split_es5_output_dir]),
+            es5_min = depset([ctx.outputs.build_es5_min, code_split_es5_min_output_dir]),
+            es5_min_debug = depset([ctx.outputs.build_es5_min_debug, code_split_es5_min_debug_output_dir]),
+        )
+
+    else:
+        # Generate the bundles
+        rollup_config = write_rollup_config(ctx)
+        es2015_map = run_rollup(ctx, _collect_es2015_sources(ctx), rollup_config, ctx.outputs.build_es2015)
+        es2015_min_map = run_terser(ctx, ctx.outputs.build_es2015, ctx.outputs.build_es2015_min, config_name = ctx.label.name + "es2015_min", in_source_map = es2015_map)
+        es2015_min_debug_map = run_terser(ctx, ctx.outputs.build_es2015, ctx.outputs.build_es2015_min_debug, debug = True, config_name = ctx.label.name + "es2015_min_debug", in_source_map = es2015_map)
+        _run_tsc(ctx, ctx.outputs.build_es2015, ctx.outputs.build_es5)
+        es5_min_map = run_terser(ctx, ctx.outputs.build_es5, ctx.outputs.build_es5_min)
+        es5_min_debug_map = run_terser(ctx, ctx.outputs.build_es5, ctx.outputs.build_es5_min_debug, debug = True)
+
+        cjs_rollup_config = write_rollup_config(ctx, filename = "_%s_cjs.rollup.conf.js", output_format = "cjs")
+        cjs_map = run_rollup(ctx, _collect_es2015_sources(ctx), cjs_rollup_config, ctx.outputs.build_cjs)
+
+        umd_rollup_config = write_rollup_config(ctx, filename = "_%s_umd.rollup.conf.js", output_format = "umd")
+        umd_map = run_rollup(ctx, _collect_es2015_sources(ctx), umd_rollup_config, ctx.outputs.build_umd)
+        umd_min_map = run_terser(ctx, ctx.outputs.build_umd, ctx.outputs.build_umd_min, config_name = ctx.label.name + "umd_min", in_source_map = umd_map)
+        _run_tsc(ctx, ctx.outputs.build_umd, ctx.outputs.build_es5_umd)
+        es5_umd_min_map = run_terser(ctx, ctx.outputs.build_es5_umd, ctx.outputs.build_es5_umd_min, config_name = ctx.label.name + "es5umd_min")
+
+        run_sourcemapexplorer(ctx, ctx.outputs.build_es5_min, es5_min_map, ctx.outputs.explore_html)
+
+        files = [ctx.outputs.build_es5_min, es5_min_map]
+        output_group = OutputGroupInfo(
+            cjs = depset([ctx.outputs.build_cjs, cjs_map]),
+            es2015 = depset([ctx.outputs.build_es2015, es2015_map]),
+            es2015_min = depset([ctx.outputs.build_es2015_min, es2015_min_map]),
+            es2015_min_debug = depset([ctx.outputs.build_es2015_min_debug, es2015_min_debug_map]),
+            es5 = depset([ctx.outputs.build_es5]),
+            es5_min = depset([ctx.outputs.build_es5_min, es5_min_map]),
+            es5_min_debug = depset([ctx.outputs.build_es5_min_debug, es5_min_debug_map]),
+            es5_umd = depset([ctx.outputs.build_es5_umd]),
+            es5_umd_min = depset([ctx.outputs.build_es5_umd_min, es5_umd_min_map]),
+            umd = depset([ctx.outputs.build_umd, umd_map]),
+            umd_min = depset([ctx.outputs.build_umd_min, umd_min_map]),
+        )
 
     return [
         DefaultInfo(
@@ -564,6 +601,14 @@ ROLLUP_ATTRS = {
         It is sufficient to load one of these SystemJS boilerplate/entry point
         files as a script in your HTML to load your application""",
     ),
+    "auto_additional_entry_points": attr.bool(
+        doc = """Set this to True instead of specifying additional_entry_points to
+        have rollup automatically determine entry points from the source code. The
+        rollup output format will be 'esm' and rollup will create entry points based
+        on ES6 import statements.
+
+        All automatic entry points will be named chunk-<HASH>.js.""",
+        default = False),
     "entry_point": attr.string(
         doc = """The starting point of the application, passed as the `--input` flag to rollup.
         This should be a path relative to the workspace root.
