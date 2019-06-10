@@ -70,6 +70,7 @@ First, you need Bazel.
 We recommend fetching it from npm to keep your frontend workflow similar.
 
 > You could install a current bazel distribution, following the [bazel instructions].
+> This has the advantage of setting up Bazel command-line completion.
 
 Next, create a `WORKSPACE` file in your project root (or edit the existing one)
 containing:
@@ -78,8 +79,8 @@ containing:
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 http_archive(
     name = "build_bazel_rules_nodejs",
-    sha256 = "bc180118b9e1c7f2b74dc76a8f798d706fe9fc53470ef9296728267b4cd29441",
-    urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/0.30.2/rules_nodejs-0.30.2.tar.gz"],
+    sha256 = "e04a82a72146bfbca2d0575947daa60fda1878c8d3a3afe868a8ec39a6b968bb",
+    urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/0.31.1/rules_nodejs-0.31.1.tar.gz"],
 )
 
 load("@build_bazel_rules_nodejs//:defs.bzl", "node_repositories")
@@ -218,14 +219,8 @@ This approach also allows you to use the generated fine-grained npm package depe
 which can significantly reduce the number of inputs to actions, making Bazel sand-boxing and
 remote-execution faster if there are a large number of files under `node_modules`.
 
-It is important to note that with Bazel-managed dependencies, Bazel will manage the `node_modules`
-folder it uses for your build outside of your workspace. Typically, you'll also want to manually
-setup a `node_modules` folder in your workspace for editor support or other tooling. This means that you'll
-typically have two copies of `node_modules`, with only the external Bazel-managed copy used by Bazel for
-your build. If you are sensitive to the additional network traffic this might incur, consider self-managing,
-keeping in mind that if your `node_modules` filegroup has too many files it may negatively impact the
-performance of your build due to the large number of inputs to all actions that use the `node_modules`
-filegroup. See https://github.com/bazelbuild/bazel/issues/5153.
+> Note that as of Bazel 0.26, and with the recommended `managed_directories` attribute on the `workspace` rule in `/WORKSPACE`,
+> the Bazel-managed `node_modules` directory is placed in your workspace root in the standard location used by npm or yarn.
 
 ### Using Bazel-managed dependencies
 
@@ -259,6 +254,22 @@ npm_install(
 
 > If you don't need to pass any arguments to `node_repositories`,
   you can skip calling that function. `yarn_install` and `npm_install` will do it by default.
+
+You should now add the `@npm` workspace to the `managed_directories` option in the `workspace` rule at the top of the file. This tells Bazel that the `node_modules` directory is special and is managed by the package manager.
+Add the `workspace` rule if it isn't already in your `/WORKSPACE` file.
+
+```python
+workspace(
+    name = "my_wksp",
+    managed_directories = {"@npm": ["node_modules"]},
+)
+```
+
+As of Bazel 0.26 this feature is still experimental, so also add this line to the `.bazelrc` to opt-in:
+
+```
+common --experimental_allow_incremental_repository_updates
+```
 
 #### yarn_install vs. npm_install
 
@@ -320,19 +331,8 @@ For example, the `protractor` package has two bin entries in its `package.json`:
 These will result in two generated `nodejs_binary` targets in the `@npm//protractor/bin`
 package (if your npm deps workspace is `@npm`):
 
-```python
-nodejs_binary(
-    name = "protractor",
-    entry_point = "protractor/bin/protractor",
-    data = ["//protractor"],
-)
-
-nodejs_binary(
-    name = "webdriver-manager",
-    entry_point = "protractor/bin/webdriver-manager",
-    data = ["//protractor"],
-)
-```
+* `@npm//protractor/bin:protractor`
+* `@npm//protractor/bin:webdriver-manager`
 
 These targets can be used as executables for actions in custom rules or can
 be run by Bazel directly. For example, you can run protractor with the
@@ -452,7 +452,7 @@ load("@build_bazel_rules_nodejs//:defs.bzl", "nodejs_binary")
 
 nodejs_binary(
     name = "rollup",
-    entry_point = "rollup/bin/rollup",
+    entry_point = "//:node_modules/rollup/bin/rollup",
 )
 ```
 
@@ -480,7 +480,7 @@ nodejs_binary(
         "@//:node_modules",
         "main.js",
     ],
-    entry_point = "workspace_name/main.js",
+    entry_point = ":main.js",
     args = ["--node_options=--expose-gc"],
 )
 ```

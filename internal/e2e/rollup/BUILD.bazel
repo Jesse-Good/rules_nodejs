@@ -3,12 +3,9 @@ load("//:defs.bzl", "rollup_bundle")
 
 rollup_bundle(
     name = "bundle",
-    srcs = [
-        "bar.js",
-        "foo.js",
-    ],
+    srcs = ["bar.js"],
+    entry_point = ":foo.js",
     auto_additional_entry_points = False,
-    entry_point = "internal/e2e/rollup/foo.js",
     globals = {"some_global_var": "runtime_name_of_global_var"},
     license_banner = ":license.txt",
     deps = [
