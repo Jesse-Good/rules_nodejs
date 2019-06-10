@@ -5,6 +5,7 @@ load("//:defs.bzl", "jasmine_node_test", "nodejs_binary", "rollup_bundle")
 rollup_bundle(
     name = "bundle_no_deps",
     srcs = ["no-deps.js"],
+    auto_additional_entry_points = False,
     entry_point = "internal/e2e/rollup_fine_grained_deps/no-deps.js",
 )
 
@@ -13,6 +14,7 @@ rollup_bundle(
 rollup_bundle(
     name = "bundle",
     srcs = ["has-deps.js"],
+    auto_additional_entry_points = False,
     entry_point = "internal/e2e/rollup_fine_grained_deps/has-deps.js",
     deps = [
         "@fine_grained_deps_yarn//@gregmagolan/test-a",
@@ -25,6 +27,7 @@ rollup_bundle(
 rollup_bundle(
     name = "bundle_legacy",
     srcs = ["has-deps.js"],
+    auto_additional_entry_points = False,
     entry_point = "internal/e2e/rollup_fine_grained_deps/has-deps.js",
     node_modules = "@fine_grained_deps_yarn//:node_modules",
 )
@@ -34,6 +37,7 @@ rollup_bundle(
 rollup_bundle(
     name = "bundle_hybrid",
     srcs = ["has-deps.js"],
+    auto_additional_entry_points = False,
     entry_point = "internal/e2e/rollup_fine_grained_deps/has-deps.js",
     node_modules = "@fine_grained_deps_yarn//:node_modules",
     deps = [

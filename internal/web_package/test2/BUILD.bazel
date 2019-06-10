@@ -4,6 +4,7 @@ load("@build_bazel_rules_nodejs//internal/web_package:web_package.bzl", "web_pac
 rollup_bundle(
     name = "local_bundle",
     srcs = glob(["*.js"]),
+    auto_additional_entry_points = False,
     entry_point = "internal/web_package/test2/script.js",
 )
 

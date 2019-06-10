@@ -608,7 +608,7 @@ ROLLUP_ATTRS = {
         on ES6 import statements.
 
         All automatic entry points will be named chunk-<HASH>.js.""",
-        default = False,
+        default = True,
     ),
     "entry_point": attr.string(
         doc = """The starting point of the application, passed as the `--input` flag to rollup.
