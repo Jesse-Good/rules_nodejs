@@ -50,6 +50,6 @@ describe('bundling main entry point', () => {
 
 describe('bundling additional entry point', () => {
   it('should work', () => {
-    check(path, 'bundle_auto.min.js', 'bundle_auto-min_golden.js_');
+    check(path, 'bundle_auto.min.js', 'goldens/bundle_auto.min.js_');
   });
 });

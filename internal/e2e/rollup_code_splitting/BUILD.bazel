@@ -18,7 +18,7 @@ rollup_bundle(
         exclude = ["*.spec.js"],
     ),
     auto_additional_entry_points = True,
-    entry_point = "internal/e2e/rollup_code_splitting/main_auto.js",
+    entry_point = ":main_auto.js",
     license_banner = ":license.txt",
 )
 
