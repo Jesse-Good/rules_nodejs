@@ -6,28 +6,15 @@ rollup_bundle(
         ["*.js"],
         exclude = ["*.spec.js"],
     ),
-    additional_entry_points = ["build_bazel_rules_nodejs/internal/e2e/rollup_code_splitting/additional_entry.js"],
-    entry_point = ":main1.js",
-    license_banner = ":license.txt",
-)
-
-rollup_bundle(
-    name = "bundle_auto",
-    srcs = glob(
-        ["*.js"],
-        exclude = ["*.spec.js"],
-    ),
     auto_additional_entry_points = True,
-    entry_point = ":main_auto.js",
+    entry_point = ":main1.js",
     license_banner = ":license.txt",
 )
 
 jasmine_node_test(
     name = "test",
     srcs = [
-        "additional_entry.spec.js",
         "main1.spec.js",
-        "main_auto.spec.js",
     ],
     data = glob([
         "goldens/*",
@@ -35,8 +22,6 @@ jasmine_node_test(
         ":bundle",
         ":bundle.min.js",
         ":bundle.min.es2015.js",
-        ":bundle_auto",
-        ":bundle_auto.min.js",
     ],
     deps = [
         "//internal/e2e:check_lib",
